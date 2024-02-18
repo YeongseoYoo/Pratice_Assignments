@@ -1,7 +1,7 @@
-import fs from 'fs/promises';
-import axios from 'axios';
-import mongoose from 'mongoose';
-import Campaign from './Campaign.js'; // Assuming Campaign is exported as default from Campaign.js
+import fs from "fs/promises";
+import axios from "axios";
+import mongoose from "mongoose";
+import Campaign from "./Campaign.js"; // Assuming Campaign is exported as default from Campaign.js
 
 async function fetchFunding() {
   try {
@@ -10,7 +10,7 @@ async function fetchFunding() {
     const response = await axios.post(baseUrl, {
       startNum: 0,
       order: "recommend",
-      limit: 48, //데이터 값. 1000개는 됨. 요청 10번이면 가능. but 10,000번이라는 큰 수를 넣으면 주지 않는다.
+      limit: 50, //데이터 값. 1000개는 됨. 요청 10번이면 가능. but 10,000번이라는 큰 수를 넣으면 주지 않는다.
       categoryCode: "",
       endYn: "",
     });
@@ -47,7 +47,7 @@ async function fetchFunding() {
 
     // Save data to JSON file
     await fs.writeFile(
-      "fetchedData.json",
+      "fetched_Data.json",
       JSON.stringify(productList, null, 2)
     );
     console.log("Data saved to JSON file.");

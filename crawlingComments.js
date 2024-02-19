@@ -6,11 +6,11 @@ import Comment from "./Comment.js";
 
 async function fetchFunding(campaignId) {
   try {
-    const productList = [];
+    const commentList = [];
     const baseUrl = `https://www.wadiz.kr/web/reward/api/comments/campaigns/${campaignId}`;
     const params = {
       page: 0,
-      size: 10,
+      size: 20,
       commentGroupType: "CAMPAIGN",
       rewardCommentType: "",
     };
@@ -21,28 +21,37 @@ async function fetchFunding(campaignId) {
 
     // Get the ObjectId of the campaign
     const campaign = await Campaign.findOne({ campaignId: campaignId });
-    const campaignObjectId = campaign._id;
+    const campaignIdString = campaign.campaignId; // Retrieve campaignId as string
 
-    comments.forEach((funding) => {
-      const body = funding.body;
-      const commentType = funding.commentType;
-      const nickName = funding.nickName;
-      const whenCreated = funding.whenCreated;
-      const commentReplys = funding.commentReplys; // Keep as array
-      const depth = funding.depth;
+    for (const comment of comments) {
+      const { body, commentType, nickName, whenCreated, commentReplys, depth } =
+        comment;
 
-      productList.push({
+      const formattedReplies = [];
+      for (const reply of commentReplys) {
+        const { body, commonId, commentType, nickName, whenCreated } = reply;
+        formattedReplies.push({
+          body,
+          Campaign: commonId,
+          commentType,
+          userNickname: nickName,
+          whenCreated,
+        });
+      }
+
+      commentList.push({
         body,
-        campaignId: campaignObjectId,
+        // Use campaignId as string
+        Campaign: campaignId,
         commentType,
-        nickName,
+        userNickname: nickName,
         whenCreated,
-        commentReplys,
+        commentReplys: formattedReplies,
         depth,
       });
-    });
+    }
 
-    return productList;
+    return commentList;
   } catch (error) {
     console.error("Error fetching funding:", error);
     return [];
@@ -51,7 +60,7 @@ async function fetchFunding(campaignId) {
 
 async function fetchAndSaveAllFundingComments() {
   try {
-    const allProductList = [];
+    const allCommentList = [];
 
     // Connect to MongoDB
     await mongoose.connect(
@@ -63,7 +72,7 @@ async function fetchAndSaveAllFundingComments() {
     );
     console.log("Connected to MongoDB.");
 
-    // 캠페인 모델 정의
+    // Campaign 모델 정의
     const CampaignModel = mongoose.model("Campaign");
 
     // 모든 캠페인 가져오기
@@ -73,26 +82,26 @@ async function fetchAndSaveAllFundingComments() {
     for (const campaign of campaigns) {
       const campaignId = campaign.campaignId;
       console.log(`Fetching comments for campaign: ${campaignId}`);
-      const productList = await fetchFunding(campaignId);
-      allProductList.push(...productList);
+      const commentList = await fetchFunding(campaignId);
+      allCommentList.push(...commentList);
     }
 
     // Save all comments to JSON file
     await fs.writeFile(
       "fetched_Comment.json",
-      JSON.stringify(allProductList, null, 2)
+      JSON.stringify(allCommentList, null, 2)
     );
     console.log("Data saved to JSON file.");
 
     // Save all comments to MongoDB
-    await Comment.insertMany(allProductList);
+    await Comment.insertMany(allCommentList);
     console.log("Data saved to MongoDB.");
 
     // Disconnect from MongoDB
     await mongoose.disconnect();
     console.log("Disconnected from MongoDB.");
 
-    return allProductList;
+    return allCommentList;
   } catch (error) {
     console.error("Error fetching and saving funding comments:", error);
     return [];

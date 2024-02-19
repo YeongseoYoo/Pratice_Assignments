@@ -2,10 +2,12 @@ import mongoose from "mongoose";
 
 const commentSchema = new mongoose.Schema({
   body: String,
-  campaignId: {
+  campaign_ObjectId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Campaign",
+    field: "campaignId",
   },
+  campaignId: String,
   commentType: String,
   nickName: String,
   whenCreated: Date,
@@ -17,12 +19,6 @@ const commentSchema = new mongoose.Schema({
   ],
   depth: Number,
   // Add field for storing replies to this comment
-  replies: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Comment",
-    },
-  ],
 });
 
 const Comment = mongoose.model("Comment", commentSchema);
